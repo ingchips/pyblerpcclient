@@ -308,7 +308,10 @@ class authorization_state(IntEnum):
 class bd_addr:
     def __init__(self, s: str | bytes):
         if isinstance(s, str):
-            self.v = bytes([int(x, 16) for x in s.split(':')])
+            if ':' in s:
+                self.v = bytes([int(x, 16) for x in s.split(':')])
+            else:
+                self.v = bytes.fromhex(s)
             self.check()
         elif isinstance(s, bytes):
             self.decode(s)

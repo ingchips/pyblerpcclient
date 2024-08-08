@@ -404,7 +404,7 @@ def signal_handler(sig, frame):
 
 SimHost: BRPCSimHost = None
 
-def start(setup_profile: Callable[[], None]):
+def _start(setup_profile: Callable[[], None]):
     global comm_queue
     global msg_queue
     global SimHost
@@ -430,13 +430,22 @@ def start(setup_profile: Callable[[], None]):
     t0 = threading.Thread(target=handle_connection, args=(s, comm_queue, msg_queue))
     t1 = threading.Thread(target=lambda : SimHost.brpc_entry())
 
-    signal.signal(signal.SIGINT, signal_handler)
-
     t0.start()
     t1.start()
 
     while RUN:
         time.sleep(1)
+
+def spawn(fun: Callable[[], None]):
+    t = threading.Thread(target=lambda : fun())
+    t.start()
+
+def start_detached(setup_profile: Callable[[], None]):
+    spawn(lambda : _start(setup_profile))
+
+def start(setup_profile: Callable[[], None]):
+    signal.signal(signal.SIGINT, signal_handler)
+    _start(setup_profile)
 
 ID_sys_mem_map_add            =  1
 ID_sys_persist_mem_new        =  2

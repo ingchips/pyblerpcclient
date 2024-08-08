@@ -1,5 +1,6 @@
 .vscode
 obj/
+ble_rpc_client.egg-info/
 *.exe
 *.bak
 __pycache__
