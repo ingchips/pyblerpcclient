@@ -206,7 +206,6 @@ class PTSAutomation:
     def __init(self):
         # Change working directory to the PTS installation directory
         os.chdir(self.pts_dir)
-        print(self.ets_manager_dir)
         self.ets = cdll.LoadLibrary(self.ets_manager_dir)
         LOG_I("[PTSAutomation]{0:s} ETS Manager library {1:s} has been loaded".format(self.tester_name, self.ets_manager_dir))
 
@@ -795,6 +794,12 @@ class ETSHandler:
 
         self.pre_inited = False
 
+    def fill_pts_info(self, info):
+        if self.automation is not None:
+            info['ptsAddr'] = self.automation.getPTSBDAddr()
+            info['etsName'] = self.automation.getETSName()
+        return info
+
     ############################################################
     ############################################################
     def onBeforeTestcaseStart(self, testcaseName):
@@ -803,7 +808,8 @@ class ETSHandler:
             self.pre_inited = True
             self._preinit()
 
-        params = {'tc': testcaseName, 'iutAddr': self._iut_address, 'ptsAddr': self.automation.getPTSBDAddr(), 'etsName':self.automation.getETSName()}
+
+        params = self.fill_pts_info({'tc': testcaseName})
         self._init(params)
 
     ############################################################
@@ -862,7 +868,7 @@ class ETSHandler:
 
         # Execute MMI Handler
         res = b'OK'
-        params = {'desc': implicitSendDesc, 'tc': implicitSendInfoTestCase, 'iutAddr': self._iut_address, 'ptsAddr': self.automation.getPTSBDAddr(), 'style':ctypes.c_int(style).value}
+        params = self.fill_pts_info({'desc': implicitSendDesc, 'tc': implicitSendInfoTestCase, 'iutAddr': self._iut_address, 'style':ctypes.c_int(style).value})
         if mmi_handler is not None:
             res = mmi_handler(params)
         else:

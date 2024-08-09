@@ -34,3 +34,14 @@ python -m pip install -e .
     ```shell
     python examples/pts_gap.py
     ```
+
+1. PTS Automation with custom Implicit Send DLL:
+
+    Download and activate custom [Implicit Send DLL](https://github.com/ingchips/pts_implicit_send_over_tcp) in the workspace.
+    Start server:
+
+    ```shell
+    python examples/implicitsend_test.py
+    ```
+
+    Run the supported cases in PTS.
