@@ -311,6 +311,15 @@ class BRPCSimHost:
                 raise Exception(f"BRPC Version not match: {BRPC_VERSION} vs {msg.brpc_ver}")
 
         elif type(msg) == BRPCFrameEvtHCI:
+
+            # on disconnect, do cleaning up
+            event = hci_event_decode(msg.packet)
+            match event:
+                case HciEventDisconnectionComplete():
+                    addresses = ObjectSim.get_addr_of_conn_handle(event.conn_handle)
+                    ObjectSim.clear_addr_of_conn_handle(event.conn_handle)
+                    for addr in addresses: remote_mem_free(addr)
+
             self.broadcast_hci_event(HCI_EVENT_PACKET, 0, msg.packet)
 
         elif type(msg) == BRPCFrameEvtAttRead:
@@ -510,10 +519,11 @@ def alloc_heap_for_conn(local_address: int, size: int, conn_handle: int) -> None
     _param = struct.pack('<IHH', local_address, size, conn_handle)
     call_void_fun(ID_sys_alloc_heap_for_conn, _param)
 
-def att_set_db(conn_hanale: int, db: bytes) -> None:
+def att_set_db(conn_handle: int, db: bytes) -> None:
     local_addr = ObjectSim.address_of_object(db)
     remote_mem_alloc(local_addr, db)
-    _param = struct.pack('<HI', conn_hanale, local_addr)
+    ObjectSim.store_addr_to_conn_handle(conn_handle, local_addr)
+    _param = struct.pack('<HI', conn_handle, local_addr)
     call_void_fun(ID_att_set_db, _param)
 
 def platform_set_irq_callback(irq: int, f: Any, user_data: Any) -> None:

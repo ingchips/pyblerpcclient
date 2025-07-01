@@ -10,6 +10,13 @@ To install in editable mode:
 python -m pip install -e .
 ```
 
+If below error occurs, `pip install --upgrade pip` and try again:
+
+```
+ERROR: File "setup.py" or "setup.cfg" not found. Directory cannot be installed in editable mode: C:\projects\ble_rpc_client
+(A "pyproject.toml" file was found, but editable mode currently requires a setuptools-based build.)
+```
+
 ## Run Examples
 
 1. A simple Python REPL:
