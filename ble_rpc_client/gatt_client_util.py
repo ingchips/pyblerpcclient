@@ -138,11 +138,11 @@ def gatt_client_util_discover_all(con_handle: hci_con_handle, callback: Callable
     pending_characteristics: list[Characteristic] = []
 
     def trigger_action():
-        if len(pending_characteristics) > 0:
-            gatt_client_discover_characteristic_descriptors(on_descriptor_discovered,
-                                                            con_handle,
-                                                            characteristic=pending_characteristics[0].to_gatt_client_characteristic())
-        else:
+        nonlocal r
+        nonlocal pending_characteristics
+        nonlocal pending_service
+
+        if len(pending_service) > 0:
             r.append(pending_service[0])
             pending_service.pop(0)
             if len(pending_service) > 0:
@@ -150,10 +150,28 @@ def gatt_client_util_discover_all(con_handle: hci_con_handle, callback: Callable
                                                                 con_handle,
                                                                 start_group_handle=pending_service[0].start_group_handle,
                                                                 end_group_handle=pending_service[0].end_group_handle)
+                return
             else:
-                callback(r)
+                pass
+
+        while len(pending_characteristics) > 0:
+            ch = pending_characteristics[0]
+            if ch.end_handle > ch.value_handle: break
+
+            pending_characteristics.pop(0)
+
+        if len(pending_characteristics) > 0:
+            gatt_client_discover_characteristic_descriptors(on_descriptor_discovered,
+                                                            con_handle,
+                                                            characteristic=pending_characteristics[0].to_gatt_client_characteristic())
+        else:
+            callback(r)
 
     def on_descriptor_discovered(packet_type: BTStackPacketType, channel: int, packet: bytes):
+        nonlocal r
+        nonlocal pending_characteristics
+        nonlocal pending_service
+
         evt = gatt_client_decode_event(packet)
         match evt:
             case GattEventDescriptorQueryResult():
@@ -161,15 +179,19 @@ def gatt_client_util_discover_all(con_handle: hci_con_handle, callback: Callable
             case GattEventQueryComplete():
                 if evt.status != 0:
                     LOG_E(f'gatt_client_discover_characteristic_descriptors: {evt.status}')
-                pending_service[0].characteristics.append(pending_characteristics[0])
                 pending_characteristics.pop(0)
                 trigger_action()
 
     def on_characteristics_discovered(packet_type: BTStackPacketType, channel: int, packet: bytes):
+        nonlocal r
+        nonlocal pending_characteristics
+        nonlocal pending_service
+
         evt = gatt_client_decode_event(packet)
         match evt:
             case GattEventCharacteristicQueryResult():
                 pending_characteristics.append(evt.characteristic)
+                pending_service[0].characteristics.append(evt.characteristic)
             case GattEventQueryComplete():
                 if evt.status != 0:
                     LOG_E(f'gatt_client_discover_characteristics_for_service: {evt.status}')
@@ -178,6 +200,10 @@ def gatt_client_util_discover_all(con_handle: hci_con_handle, callback: Callable
                 LOG_E(f"unexpected evt: {evt}")
 
     def on_service_discovered(packet_type: BTStackPacketType, channel: int, packet: bytes):
+        nonlocal r
+        nonlocal pending_characteristics
+        nonlocal pending_service
+
         evt = gatt_client_decode_event(packet)
         match evt:
             case GattEventServiceQueryResult():
