@@ -122,13 +122,13 @@ def gatt_client_decode_event(packet: bytes) -> Any:
         case bt_defs.GATT_EVENT_ALL_CHARACTERISTIC_DESCRIPTORS_QUERY_RESULT:
             return GattEventDescriptorQueryResult(param)
         case bt_defs.GATT_EVENT_NOTIFICATION:
-            return GattEventNotification(param)
+            return GattEventNotification(packet[1:])
         case bt_defs.GATT_EVENT_INDICATION:
-            return GattEventIndication(param)
+            return GattEventIndication(packet[1:])
         case bt_defs.GATT_EVENT_CHARACTERISTIC_VALUE_QUERY_RESULT:
-            return GattEventCharacteristicValueQueryResult(param)
+            return GattEventCharacteristicValueQueryResult(packet[1:])
         case bt_defs.GATT_EVENT_CHARACTERISTIC_DESCRIPTOR_QUERY_RESULT:
-            return GattEventCharacteristicDescriptorQueryResult(param)
+            return GattEventCharacteristicDescriptorQueryResult(packet[1:])
         case other:
             raise Exception(f"gatt_client_code_event: not implemented for {code}")
 
